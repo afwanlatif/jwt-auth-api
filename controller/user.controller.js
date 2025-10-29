@@ -92,11 +92,11 @@ const userLists = async (req, res) => {
         const page = parseInt(req.query.page) || 1; // Default to page 1
         const limit = envConfig.pagination_limit; // 5 per page
         const offSet = (page - 1) * limit;
-        
+
         const totalUsers = await UserModel.countDocuments({ recStatus: RecordStatus.ACTIVE });
         const users = await UserModel.find().skip(offSet).limit(limit);
         const totalPages = Math.ceil(totalUsers / limit);
-        
+
         return res.status(200).json({
             message: 'User Lists Fetched Sucessfully',
             page,
@@ -136,6 +136,34 @@ const userLogin = async (req, res) => {
     };
 };
 
+// changePassword
+
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { oldPassword, newPassword } = req.body;
+        if (!userId) {
+            return res.status(400).json({ message: 'UserId Is Required' });
+        } else if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: 'Old and New Password are required' });
+        };
+        const userExists = await UserModel.findOne({ _id: userId });
+        if (!userExists) {
+            return res.status(400).json({ message: 'User not found Authentication Failed' })
+        };
+        const matchPassword = await bcrypt.compare(oldPassword, userExists.password);
+        if (!matchPassword) {
+            return res.status(401).json({ message: 'Invalid Old Password' });
+        };
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        userExists.password = hashedNewPassword;
+        const updatedPassword = await userExists.save();
+        return res.status(200).json({ message: 'Password Changed Sucessfully', updatedPassword });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal Server Error', error })
+    };
+};
+
 // RefreshToken 
 
 const refreshToken = async (req, res) => {
@@ -170,5 +198,6 @@ module.exports = {
     deleteUser,
     userLists,
     userLogin,
-    refreshToken
+    refreshToken,
+    changePassword
 }

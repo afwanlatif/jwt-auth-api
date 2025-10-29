@@ -11,6 +11,7 @@ app.get('/get/:id', controller.getUser);
 app.delete('/delete/:id', controller.deleteUser);
 app.get('/Lists', controller.userLists);
 app.post('/Login', controller.userLogin);
+app.post('/changePassword/:id', controller.changePassword);
 app.post('/refreshToken', controller.refreshToken);
 
 module.exports = app;
